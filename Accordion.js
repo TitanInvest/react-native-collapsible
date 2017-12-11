@@ -16,11 +16,8 @@ export default class Accordion extends Component {
     align: PropTypes.oneOf(['top', 'center', 'bottom']),
     duration: PropTypes.number,
     easing: PropTypes.string,
-    initiallyActiveSection: PropTypes.number,
-    activeSection: PropTypes.oneOfType([
-      PropTypes.bool, // if false, closes all sections
-      PropTypes.number, // sets index of section to open
-    ]),
+    initiallyActiveSections: PropTypes.arrayOf(PropTypes.number),
+    activeSections: PropTypes.arrayOf(PropTypes.number),
     underlayColor: PropTypes.string,
     touchableComponent: PropTypes.func,
     touchableProps: PropTypes.object,
@@ -34,32 +31,32 @@ export default class Accordion extends Component {
   constructor(props) {
     super(props);
 
-    // if activeSection not specified, default to initiallyActiveSection
     this.state = {
-      activeSection:
-        props.activeSection !== undefined
-          ? props.activeSection
-          : props.initiallyActiveSection,
+      activeSections: props.initiallyActiveSections || [],
     };
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.activeSection !== undefined) {
-      this.setState({
-        activeSection: nextProps.activeSection,
-      });
-    }
-  }
+  // componentWillReceiveProps(nextProps) {
+  //   if (nextProps.activeSections !== undefined) {
+  //     this.setState({
+  //       activeSection: nextProps.activeSections,
+  //     });
+  //   }
+  // }
 
   _toggleSection(section) {
-    const activeSection =
-      this.state.activeSection === section ? false : section;
-
-    if (this.props.activeSection === undefined) {
-      this.setState({ activeSection });
+    const { activeSections } = this.state;
+    const currentlyActive = activeSections.includes(section);
+    if (currentlyActive) {
+      const otherSections = activeSections.filter(a => a !== section);
+      this.setState({ activeSections: otherSections });
+    } else {
+      activeSections.push(section);
+      this.setState({ activeSections });
     }
+
     if (this.props.onChange) {
-      this.props.onChange(activeSection);
+      this.props.onChange(activeSections);
     }
   }
 
@@ -88,17 +85,17 @@ export default class Accordion extends Component {
               {this.props.renderHeader(
                 section,
                 key,
-                this.state.activeSection === key
+                this.state.activeSections.includes(key)
               )}
             </Touchable>
             <Collapsible
-              collapsed={this.state.activeSection !== key}
+              collapsed={!this.state.activeSections.includes(key)}
               {...collapsibleProps}
             >
               {this.props.renderContent(
                 section,
                 key,
-                this.state.activeSection === key
+                this.state.activeSections.includes(key)
               )}
             </Collapsible>
           </View>
